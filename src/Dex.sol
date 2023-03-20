@@ -35,27 +35,46 @@ contract Dex is ERC20 {
     }
     
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount) {
+        k = (amountX) * amountY;
         if(tokenXAmount != 0){
             uint256 x_value = tokenXAmount / 1000 * 999;
-            amountX += x_value;
+            X.transferFrom(msg.sender, address(this), x_value);
+            reserveX = amountX; reserveY = amountY;
+
+            (amountX, amountY) = amount_update();
+
             amountY = k / amountX;
+
             outputAmount = reserveY - amountY;
+
             require(outputAmount < amountY);
+            require(tokenMinimumOutputAmount < outputAmount);
+
+            Y.transfer(msg.sender, outputAmount);
         }
         else{
             uint y_value = tokenYAmount / 1000 * 999;
-            amountY += y_value;
+            Y.transferFrom(msg.sender, address(this), y_value);
+            reserveY = amountY; reserveX = amountX;
+
+            (amountX, amountY) = amount_update();
+
             amountX = k / amountY;
+
             outputAmount = reserveX - amountX;
+
             require(outputAmount < amountX);
+            require(tokenMinimumOutputAmount < outputAmount);
+            
+            Y.transfer(msg.sender, outputAmount);
         }
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
   //수정 필요
         require(tokenXAmount > 0 && tokenYAmount > 0);
-        reserveX = X.balanceOf(address(this));
-        reserveY = Y.balanceOf(address(this));
+        (reserveX, ) = amount_update();
+        (, reserveY) = amount_update();
 
         if(totalSupply() == 0){
             set_LP = tokenXAmount * tokenYAmount / 10**18;
@@ -103,6 +122,11 @@ contract Dex is ERC20 {
 
     function transfer(address to, uint256 lpAmount) public virtual override returns (bool){
         super.transfer(to, lpAmount);
+    }
+
+    function amount_update() public returns (uint256 amountX, uint256 amountY) {
+        amountX = X.balanceOf(address(this));
+        amountY = Y.balanceOf(address(this));
     }
 
 
