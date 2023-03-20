@@ -10,8 +10,8 @@ contract Dex is ERC20 {
     address public owner;
     uint256 public reserveX;
     uint256 public reserveY;
-    uint256 public accountX;
-    uint256 public accountY;
+    uint256 public amountX;
+    uint256 public amountY;
     uint256 public k;
     address public tokenLP;
     uint public nonce;
@@ -30,43 +30,60 @@ contract Dex is ERC20 {
         nonce = 0;
         reserveX = 0;
         reserveY = 0;
-        accountX = 0;
-        accountY = 0;
+        amountX = 0;
+        amountY = 0;
     }
     
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount) {
         if(tokenXAmount != 0){
             uint256 x_value = tokenXAmount / 1000 * 999;
-            accountX += x_value;
-            accountY = k / accountX;
-            outputAmount = reserveY - accountY;
-            require(outputAmount < accountY);
+            amountX += x_value;
+            amountY = k / amountX;
+            outputAmount = reserveY - amountY;
+            require(outputAmount < amountY);
         }
         else{
             uint y_value = tokenYAmount / 1000 * 999;
-            accountY += y_value;
-            accountX = k / accountY;
-            outputAmount = reserveX - accountX;
-            require(outputAmount < accountX);
+            amountY += y_value;
+            amountX = k / amountY;
+            outputAmount = reserveX - amountX;
+            require(outputAmount < amountX);
         }
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
-        set_LP = (tokenXAmount + tokenYAmount)/2;  //수정 필요
+  //수정 필요
+        console.log("totalsupply: ", totalSupply());
+        
+        reserveX = amountX;
+        reserveY = amountY;
+
+        if(totalSupply() == 0){
+            set_LP = tokenXAmount * tokenYAmount / 10**18;
+        }
+        else{
+            set_LP = totalSupply() * (tokenXAmount) / reserveX;
+        }
+        console.log("minimumLP", minimumLPTokenAmount);
+        console.log("set_lp: ", set_LP);
+        require(minimumLPTokenAmount <= set_LP);
+        LPTokenAmount = set_LP;
+
 
         X.transferFrom(msg.sender, address(this), tokenXAmount);
-        reserveX = accountX;
-        accountX = reserveX + tokenXAmount;
-
+        amountX = reserveX + tokenXAmount;
+        console.log("reserve: ", reserveX);
+        console.log("amount: ", amountX);
 
         Y.transferFrom(msg.sender, address(this), tokenYAmount);
-        reserveY = accountY;
-        accountY = reserveY + tokenYAmount;
+        amountY = reserveY + tokenYAmount;
+        console.log("reserve: ", reserveY);
+        console.log("amount: ", amountY);
 
-        k = accountX * accountY;
-        console.log("adsfasdfasdf", Y.balanceOf(address(this)));
-        if(minimumLPTokenAmount <= set_LP){LPTokenAmount = set_LP;}
-        console.log("balanceofLP:", LPTokenAmount);
+        k = amountX * amountY;
+        console.log("totalsupply: ", totalSupply());
+
+
         //lp_list.push();
         //lp_list[nonce][LPTokenAmount] = [tokenXAmount, tokenYAmount];
         
@@ -80,8 +97,8 @@ contract Dex is ERC20 {
     }
 
     function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint tx, uint ty){
-        require(minimumTokenXAmount < accountX);
-        require(minimumTokenYAmount < accountY);
+        require(minimumTokenXAmount < amountX);
+        require(minimumTokenYAmount < amountY);
         tx = lp_list[nonce][LPTokenAmount][0];
         ty = lp_list[nonce][LPTokenAmount][1];
         nonce -= 1;

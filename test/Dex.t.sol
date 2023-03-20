@@ -55,6 +55,7 @@ contract DexTest is Test {
         emit log_named_uint("firstLPReturn", firstLPReturn);
 
         (bool success, ) = address(dex).call(abi.encodeWithSelector(dex.addLiquidity.selector, 1000 ether, 1000 ether, firstLPReturn * 10001 / 10000));
+        console.log("???: ", success);
         assertTrue(!success, "AddLiquidity minimum LP return error");
     }
 
