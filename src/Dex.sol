@@ -54,8 +54,8 @@ contract Dex is ERC20 {
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
   //수정 필요
         require(tokenXAmount > 0 && tokenYAmount > 0);
-        reserveX = amountX;
-        reserveY = amountY;
+        reserveX = X.balanceOf(address(this));
+        reserveY = Y.balanceOf(address(this));
 
         if(totalSupply() == 0){
             set_LP = tokenXAmount * tokenYAmount / 10**18;
@@ -95,6 +95,9 @@ contract Dex is ERC20 {
 
         amountX -= tx;
         amountY -= ty;
+
+        console.log("rx: ", tx);
+        console.log("ry: ", ty);
 
     }
 
