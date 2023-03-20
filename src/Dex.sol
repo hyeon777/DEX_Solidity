@@ -28,10 +28,10 @@ contract Dex is ERC20 {
         X = ERC20(tokenX);
         Y = ERC20(tokenY);
         nonce = 0;
-        reserveX = 0;
-        reserveY = 0;
-        amountX = 0;
-        amountY = 0;
+        //reserveX = 0;
+        //reserveY = 0;
+        //amountX = 0;
+        //amountY = 0;
     }
     
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount) {
@@ -53,8 +53,7 @@ contract Dex is ERC20 {
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
   //수정 필요
-        console.log("totalsupply: ", totalSupply());
-        
+        require(tokenXAmount > 0 && tokenYAmount > 0);
         reserveX = amountX;
         reserveY = amountY;
 
@@ -64,24 +63,17 @@ contract Dex is ERC20 {
         else{
             set_LP = totalSupply() * (tokenXAmount) / reserveX;
         }
-        console.log("minimumLP", minimumLPTokenAmount);
-        console.log("set_lp: ", set_LP);
         require(minimumLPTokenAmount <= set_LP);
         LPTokenAmount = set_LP;
 
-
         X.transferFrom(msg.sender, address(this), tokenXAmount);
         amountX = reserveX + tokenXAmount;
-        console.log("reserve: ", reserveX);
-        console.log("amount: ", amountX);
 
         Y.transferFrom(msg.sender, address(this), tokenYAmount);
         amountY = reserveY + tokenYAmount;
-        console.log("reserve: ", reserveY);
-        console.log("amount: ", amountY);
 
         k = amountX * amountY;
-        console.log("totalsupply: ", totalSupply());
+
 
 
         //lp_list.push();
