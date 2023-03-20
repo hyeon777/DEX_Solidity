@@ -5,28 +5,28 @@ import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "forge-std/console.sol";
 
-contract Dex {
+
+contract Dex is ERC20 {
     address public owner;
     uint256 public reserveX;
     uint256 public reserveY;
     uint256 public accountX;
     uint256 public accountY;
     uint256 public k;
+    address public tokenLP;
     uint public nonce;
     uint256 public X_value;
-    uint256 public set_LP;
+    uint public set_LP;
 
     mapping (uint256 => uint[2])[] public lp_list;
 
     ERC20 public X;
     ERC20 public Y;
-    ERC20 LP;
 
-    constructor (address tokenX, address tokenY) {
+    constructor (address tokenX, address tokenY) ERC20("DREAM", "DRM") {
         owner = msg.sender;
         X = ERC20(tokenX);
         Y = ERC20(tokenY);
-        LP = new ERC20("DREAM", "DRM");
         nonce = 0;
         reserveX = 0;
         reserveY = 0;
@@ -64,15 +64,18 @@ contract Dex {
         accountY = reserveY + tokenYAmount;
 
         k = accountX * accountY;
-
-        if(minimumLPTokenAmount < set_LP){LPTokenAmount = set_LP;}
+        console.log("adsfasdfasdf", Y.balanceOf(address(this)));
+        if(minimumLPTokenAmount <= set_LP){LPTokenAmount = set_LP;}
+        console.log("balanceofLP:", LPTokenAmount);
         //lp_list.push();
         //lp_list[nonce][LPTokenAmount] = [tokenXAmount, tokenYAmount];
         
         //nonce += 1; 
         //console.log("nonce: ", nonce);
         //console.log("lp", LPTokenAmount);
-        LP.transferFrom(address(this), msg.sender, LPTokenAmount);
+        //LP.transferFrom(address(this), msg.sender, LPTokenAmount);
+        _mint(msg.sender, LPTokenAmount);
+
 
     }
 
@@ -87,13 +90,13 @@ contract Dex {
         X.transferFrom(address(this), msg.sender, tx);
         Y.transferFrom(address(this), msg.sender, ty);
     
-        LP.transferFrom(msg.sender, address(this), LPTokenAmount);
+       // LP.transferFrom(msg.sender, address(this), LPTokenAmount);
 
 
     }
 
-    function transfer(address to, uint256 lpAmount) public virtual returns (bool){
-        transfer(to, lpAmount);
+    function transfer(address to, uint256 lpAmount) public virtual override returns (bool){
+        super.transfer(to, lpAmount);
     }
 
 
