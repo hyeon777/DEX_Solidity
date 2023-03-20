@@ -45,43 +45,41 @@ contract Dex is ERC20 {
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
+
         require(tokenXAmount > 0 && tokenYAmount > 0);
         (uint256 reserveX, ) = amount_update();
         (, uint256 reserveY) = amount_update();
 
-        if(totalSupply() == 0){
-            LPTokenAmount = tokenXAmount * tokenYAmount / 10**18;
-        }
-        else{
-            LPTokenAmount = totalSupply() * tokenXAmount / reserveX;
-        }
+        if(totalSupply() == 0){ LPTokenAmount = tokenXAmount * tokenYAmount / 10**18;}
+        else{ LPTokenAmount = totalSupply() * tokenXAmount / reserveX;}
+
         require(minimumLPTokenAmount <= LPTokenAmount);
 
         X.transferFrom(msg.sender, address(this), tokenXAmount);
         amountX = reserveX + tokenXAmount;
-
         Y.transferFrom(msg.sender, address(this), tokenYAmount);
         amountY = reserveY + tokenYAmount;
 
         _mint(msg.sender, LPTokenAmount);
     }
 
-    function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint tx, uint ty){
+    function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint _tx, uint _ty){
         amount_update();
 
-        tx = amountX * LPTokenAmount / totalSupply();
-        ty = amountY * LPTokenAmount / totalSupply();
+        _tx = amountX * LPTokenAmount / totalSupply();
+        _ty = amountY * LPTokenAmount / totalSupply();
 
-        require(tx>=minimumTokenXAmount);
-        require(ty>=minimumTokenYAmount);
+        require(_tx>=minimumTokenXAmount);
+        require(_ty>=minimumTokenYAmount);
 
-        X.transfer(msg.sender, tx);
-        Y.transfer(msg.sender, ty);
+        X.transfer(msg.sender, _tx);
+        Y.transfer(msg.sender, _ty);
         _burn(msg.sender, LPTokenAmount);
     }
 
     function transfer(address to, uint256 lpAmount) public virtual override returns (bool){
         super.transfer(to, lpAmount);
+        return true;
     }
 
     function amount_update() internal returns (uint256, uint256) {
