@@ -13,12 +13,7 @@ contract Dex is ERC20 {
     uint256 public amountX;
     uint256 public amountY;
     uint256 public k;
-    address public tokenLP;
-    uint public nonce;
-    uint256 public X_value;
-    uint public set_LP;
-
-    mapping (uint256 => uint[2])[] public lp_list;
+    uint256 public set_LP;
 
     ERC20 public X;
     ERC20 public Y;
@@ -27,51 +22,43 @@ contract Dex is ERC20 {
         owner = msg.sender;
         X = ERC20(tokenX);
         Y = ERC20(tokenY);
-        nonce = 0;
-        //reserveX = 0;
-        //reserveY = 0;
-        //amountX = 0;
-        //amountY = 0;
     }
     
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount) {
-        k = (amountX) * amountY;
-        if(tokenXAmount != 0){
+        require((tokenXAmount==0)|| (tokenYAmount == 0));
+        require(amountX >0 && amountY > 0);
+        (reserveX, reserveY) = amount_update();
+        k = amountX * amountY;
+
+        if(tokenXAmount > 0){
             uint256 x_value = tokenXAmount / 1000 * 999;
-            X.transferFrom(msg.sender, address(this), x_value);
-            reserveX = amountX; reserveY = amountY;
-
-            (amountX, amountY) = amount_update();
-
-            amountY = k / amountX;
-
+            amountY = k / (amountX + x_value);
             outputAmount = reserveY - amountY;
 
-            require(outputAmount < amountY);
-            require(tokenMinimumOutputAmount < outputAmount);
-
+            require(outputAmount < amountY, "outputAmount is bigger than amount of Y");
+            require(tokenMinimumOutputAmount < outputAmount, "you claim too much token");
+            X.transferFrom(msg.sender, address(this), tokenXAmount);
             Y.transfer(msg.sender, outputAmount);
+
+            amount_update();
+
+
         }
         else{
-            uint y_value = tokenYAmount / 1000 * 999;
-            Y.transferFrom(msg.sender, address(this), y_value);
-            reserveY = amountY; reserveX = amountX;
-
-            (amountX, amountY) = amount_update();
-
-            amountX = k / amountY;
-
+            uint256 y_value = tokenYAmount / 1000 * 999;
+            amountX = k / (amountY + y_value);
             outputAmount = reserveX - amountX;
 
-            require(outputAmount < amountX);
-            require(tokenMinimumOutputAmount < outputAmount);
-            
-            Y.transfer(msg.sender, outputAmount);
+            require(outputAmount < amountX, "outputAmount is bigger than amount of X");
+            require(tokenMinimumOutputAmount < outputAmount, "you claim too much token");
+            Y.transferFrom(msg.sender, address(this), tokenYAmount);
+            X.transfer(msg.sender, outputAmount);
+
+            amount_update();
         }
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
-  //수정 필요
         require(tokenXAmount > 0 && tokenYAmount > 0);
         (reserveX, ) = amount_update();
         (, reserveY) = amount_update();
@@ -99,8 +86,8 @@ contract Dex is ERC20 {
     }
 
     function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint tx, uint ty){
-        require(minimumTokenXAmount <= amountX);
-        require(minimumTokenYAmount <= amountY);
+        amount_update();
+        require(balanceOf(msg.sender) >= LPTokenAmount, "more remove than owning");
 
         tx = amountX * LPTokenAmount / totalSupply();
         ty = amountY * LPTokenAmount / totalSupply();
@@ -112,11 +99,8 @@ contract Dex is ERC20 {
         Y.transfer(msg.sender, ty);
         _burn(msg.sender, LPTokenAmount);
 
-        amountX -= tx;
-        amountY -= ty;
+        amount_update();
 
-        console.log("rx: ", tx);
-        console.log("ry: ", ty);
 
     }
 
@@ -124,9 +108,11 @@ contract Dex is ERC20 {
         super.transfer(to, lpAmount);
     }
 
-    function amount_update() public returns (uint256 amountX, uint256 amountY) {
+    function amount_update() internal returns (uint256, uint256) {
         amountX = X.balanceOf(address(this));
         amountY = Y.balanceOf(address(this));
+
+        return (amountX, amountY);
     }
 
 

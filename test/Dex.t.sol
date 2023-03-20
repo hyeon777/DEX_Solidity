@@ -141,7 +141,8 @@ contract DexTest is Test {
         for (uint i=0; i<100; i++) {
             sumX += dex.swap(0, 1000 ether, 0);
             sumY += dex.swap(1000 ether, 0, 0);
-        }
+        }   
+        console.log("sum: ", sumX);
 
         // usedX = 1000 ether * 100
         // usedY = 1000 ether * 100
@@ -160,7 +161,11 @@ contract DexTest is Test {
         (uint rx, uint ry) = dex.removeLiquidity(firstLPReturn, 0, 0);
 
         bool successX = rx <= (poolAmountX * 10001 / 10000 / 3) && rx >= (poolAmountX * 9999 / 10000 / 3); // allow 0.01%;
+        console.log(rx);
+        console.log(poolAmountX * 10001 / 10000 / 3);
+        console.log(poolAmountX * 9999 / 10000 / 3);
         bool successY = ry <= (poolAmountY * 10001 / 10000 / 3) && ry >= (poolAmountY * 9999 / 10000 / 3); // allow 0.01%;
+
         assertTrue(successX, "remove liquidity after swap error; rx");
         assertTrue(successY, "remove liquidity after swap error; ry");
     }
