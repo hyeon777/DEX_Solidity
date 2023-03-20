@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import "../src/Dex.sol";
 
 contract CustomERC20 is ERC20 {
@@ -55,7 +55,6 @@ contract DexTest is Test {
         emit log_named_uint("firstLPReturn", firstLPReturn);
 
         (bool success, ) = address(dex).call(abi.encodeWithSelector(dex.addLiquidity.selector, 1000 ether, 1000 ether, firstLPReturn * 10001 / 10000));
-        console.log("???: ", success);
         assertTrue(!success, "AddLiquidity minimum LP return error");
     }
 
@@ -104,7 +103,6 @@ contract DexTest is Test {
         emit log_named_uint("secondLPReturn", secondLPReturn);
 
         (uint tx, uint ty) = dex.removeLiquidity(secondLPReturn, 0, 0);
-
         assertEq(tx, 1000 ether * 2, "RemoveLiquiidty tx error");
         assertEq(ty, 1000 ether * 2, "RemoveLiquiidty tx error");
     }
