@@ -74,33 +74,27 @@ contract Dex is ERC20 {
 
         k = amountX * amountY;
 
-
-
-        //lp_list.push();
-        //lp_list[nonce][LPTokenAmount] = [tokenXAmount, tokenYAmount];
-        
-        //nonce += 1; 
-        //console.log("nonce: ", nonce);
-        //console.log("lp", LPTokenAmount);
-        //LP.transferFrom(address(this), msg.sender, LPTokenAmount);
         _mint(msg.sender, LPTokenAmount);
 
 
     }
 
     function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint tx, uint ty){
-        require(minimumTokenXAmount < amountX);
-        require(minimumTokenYAmount < amountY);
-        tx = lp_list[nonce][LPTokenAmount][0];
-        ty = lp_list[nonce][LPTokenAmount][1];
-        nonce -= 1;
-        require(tx>minimumTokenXAmount);
-        require(ty>minimumTokenYAmount);
-        X.transferFrom(address(this), msg.sender, tx);
-        Y.transferFrom(address(this), msg.sender, ty);
-    
-       // LP.transferFrom(msg.sender, address(this), LPTokenAmount);
+        require(minimumTokenXAmount <= amountX);
+        require(minimumTokenYAmount <= amountY);
 
+        tx = amountX * LPTokenAmount / totalSupply();
+        ty = amountY * LPTokenAmount / totalSupply();
+
+        require(tx>=minimumTokenXAmount);
+        require(ty>=minimumTokenYAmount);
+
+        X.transfer(msg.sender, tx);
+        Y.transfer(msg.sender, ty);
+        _burn(msg.sender, LPTokenAmount);
+
+        amountX -= tx;
+        amountY -= ty;
 
     }
 
