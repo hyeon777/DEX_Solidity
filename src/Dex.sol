@@ -76,12 +76,7 @@ contract Dex is ERC20 {
         Y.transfer(msg.sender, _ty);
         _burn(msg.sender, LPTokenAmount);
     }
-
-    function transfer(address to, uint256 lpAmount) public virtual override returns (bool){
-        super.transfer(to, lpAmount);
-        return true;
-    }
-
+    
     function amount_update() internal returns (uint256, uint256) {
         amountX = X.balanceOf(address(this));
         amountY = Y.balanceOf(address(this));
