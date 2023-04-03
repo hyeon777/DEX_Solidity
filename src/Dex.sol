@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/utils/math/Math.sol";
+
 
 contract Dex is ERC20 {
     uint256 public amountX;
@@ -23,7 +25,7 @@ contract Dex is ERC20 {
         uint256 k = reserveX * reserveY;
 
         if(tokenXAmount > 0){
-            uint256 x_value = tokenXAmount / 1000 * 999;
+            uint256 x_value = tokenXAmount * 999 / 1000;
             amountY = k / (amountX + x_value);
             outputAmount = reserveY - amountY;
 
@@ -33,7 +35,7 @@ contract Dex is ERC20 {
             Y.transfer(msg.sender, outputAmount);
         }
         else{
-            uint256 y_value = tokenYAmount / 1000 * 999;
+            uint256 y_value = tokenYAmount * 999 / 1000;
             amountX = k / (amountY + y_value);
             outputAmount = reserveX - amountX;
 
@@ -47,11 +49,13 @@ contract Dex is ERC20 {
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint LPTokenAmount){
 
         require(tokenXAmount > 0 && tokenYAmount > 0);
-        (uint256 reserveX, ) = amount_update();
-        (, uint256 reserveY) = amount_update();
+        (uint256 reserveX, uint reserveY) = amount_update();
 
-        if(totalSupply() == 0){ LPTokenAmount = tokenXAmount * tokenYAmount / 10**18;}
-        else{ LPTokenAmount = totalSupply() * tokenXAmount / reserveX;}
+        if(totalSupply() == 0){ 
+            Math.sqrt(LPTokenAmount = tokenXAmount * tokenYAmount);}
+        else{ 
+            require(tokenXAmount*reserveY == tokenYAmount*reserveX, "imbalance");
+            LPTokenAmount = Math.min(totalSupply() * tokenXAmount / reserveX, totalSupply() * tokenYAmount / reserveY);}
 
         require(minimumLPTokenAmount <= LPTokenAmount);
 
@@ -64,6 +68,7 @@ contract Dex is ERC20 {
     }
 
     function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external returns (uint _tx, uint _ty){
+        require(balanceOf(msg.sender)>=LPTokenAmount, "You require too much than you have");
         amount_update();
 
         _tx = amountX * LPTokenAmount / totalSupply();
@@ -84,4 +89,3 @@ contract Dex is ERC20 {
         return (amountX, amountY);
     }
 }
-
